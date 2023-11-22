@@ -1,0 +1,111 @@
+---
+title: 'Assignment #6 Arima'
+author: "Aolong Zhang"
+date: "2023-11-22"
+output: html_document
+---
+
+```{r}
+library(readxl)
+Tesla_sales <- read_excel("C:/Users/17215/OneDrive/Desktop/Tesla sales.xlsx")
+View(Tesla_sales)
+
+class(Tesla_sales)
+
+## convert dataset to time series
+data = ts(Tesla_sales$`Total Sales`, start = c(2015),end = c(2023,6),
+           frequency = 12)
+
+library(fpp)
+library(fpp2)
+
+plot(data)
+
+## choose the time window
+data1 <- window(data, start = c(2022,4))
+plot(data1)
+
+## acf
+Acf(data1)
+
+## test if data is stationary, it shows no stationary
+adf.test(data1)
+
+## we need 1 difference to do it, and there is no seasonality
+nsdiffs(data1)
+ndiffs(data1)
+
+#tsdisplay plots ACF,PACF and timeseries plot together
+tsdisplay(data1)
+
+## auto.arima gives the best model
+auto.arima(data1, trace = TRUE)
+fit3 <- Arima(data1, order=c(0,1,0))
+
+# See the output of ARIMA
+fit3
+
+# Store the residuals
+res <- residuals(fit3)
+
+
+## residual analysis
+
+tsdisplay(res)
+Acf(fit3$residuals)
+plot.ts(residuals(fit3))
+hist(fit3$residuals)
+
+
+## forecast and plot
+
+fcast = forecast(fit3, h=5)           
+plot(fcast)          
+plot(data1)
+lines(fcast$fitted,col = "red")
+
+
+```
+
+# Explain the output  
+The model selected is ARIMA(0,1,0), which indicates that it is a simple differencing model without any autoregressive (AR) or moving average (MA) terms.p=0 means No AR terms are included, meaning past values of the series are not used to predict future values.d=1 means the series is differenced once to make it stationary, and q=0 means no moving averge  terms are included.
+
+
+# Run Residual Analysis  
+1. The plot shows residuals fluctuating over time with no obvious trend or seasonality in the residuals.  
+
+2. he ACF plot for residuals shows that all the autocorrelations are within the confidence bounds, which is good.  
+
+3. The PACF plot also shows that partial autocorrelations are within the confidence bounds for the first few lags.  
+
+4. It is not a  normal distribution; it shows a potential right skewness.  
+
+
+```{r}
+tsdisplay(res)
+Acf(fit3$residuals)
+plot.ts(residuals(fit3))
+hist(fit3$residuals)
+
+
+```
+
+# Perform and Plot forecast for the next 5 periods  
+
+```{r}
+fcast = forecast(fit3, h=5)           
+plot(fcast)          
+plot(data1)
+lines(fcast$fitted,col = "red")
+
+```
+
+# Show the accuracy of Arima model  
+
+MAE(mean absolute error) is 2902, which is actually better than all my previous models, which is good.
+```{r}
+accuracy(fcast)
+```
+
+
+
